@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>해적 룰렛 — 가볍게 한 판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12131a;
+    --panel: #1b1d28;
+    --panel-2: #20232f;
+    --line: #33374a;
+    --ink: #f1eee6;
+    --muted: #9295a6;
+    --gold: #f5b942;
+    --gold-ink: #241a06;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  html{ scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    min-height: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap{ max-width: 520px; margin: 0 auto; padding: 36px 20px 64px; }
+  .hero{ text-align: center; margin-bottom: 28px; }
+  .hero h1{
+    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-weight: 400;
+    font-size: clamp(34px, 9vw, 46px);
+    letter-spacing: 1px;
+    margin: 0 0 6px;
+  }
+  .hero p{ margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+  .panel{ background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 20px; margin-bottom: 16px; }
+  .panel-title{ font-size: 13px; color: var(--muted); margin: 0 0 14px; font-weight: 500; }
+  .stepper{ display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .stepper button{
+    width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--ink); font-size: 18px; line-height: 1; cursor: pointer;
+  }
+  .stepper button:active{ transform: scale(0.96); }
+  .stepper button:disabled{ opacity: 0.35; cursor: not-allowed; }
+  .stepper .count{ font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif; font-size: 26px; min-width: 30px; text-align: center; }
+  .stepper .count-label{ color: var(--muted); font-size: 13.5px; }
+  .name-row{ display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .swatch{ width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+  .name-row input{
+    flex: 1; min-width: 0; background: var(--panel-2); border: 1.5px solid var(--line);
+    border-radius: 8px; padding: 10px 12px; color: var(--ink); font-family: inherit; font-size: 15px; outline: none;
+  }
+  .name-row input:focus{ border-color: var(--gold); }
+  .toggle-row{ display: flex; align-items: center; justify-content: space-between; padding-top: 10px; margin-top: 8px; border-top: 1px solid var(--line); }
+  .toggle-row span{ font-size: 14px; color: var(--ink); }
+  .toggle-row small{ display:block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .switch{ width: 42px; height: 24px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); position: relative; cursor: pointer; flex-shrink: 0; }
+  .switch::after{ content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); transition: transform .18s ease, background .18s ease; }
+  .switch.on{ border-color: var(--gold); }
+  .switch.on::after{ transform: translateX(18px); background: var(--gold); }
+  .label-inputs{ margin-top: 12px; display: none; }
+  .label-inputs.show{ display: block; }
+  .label-row{ display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+  .label-row .rank-badge{ font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif; font-size: 13px; color: var(--gold); width: 34px; flex-shrink: 0; text-align: right; }
+  .label-row input{
+    flex: 1; background: var(--panel-2); border: 1.5px solid var(--line); border-radius: 8px;
+    padding: 9px 11px; color: var(--ink); font-family: inherit; font-size: 14px; outline: none;
+  }
+  .label-row input:focus{ border-color: var(--gold); }
+  .cta{
+    width: 100%; margin-top: 4px; padding: 15px; border-radius: 10px; border: none;
+    background: var(--gold); color: var(--gold-ink); font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-size: 17px; letter-spacing: 0.5px; cursor: pointer;
+  }
+  .cta:disabled{ opacity: 0.45; cursor: not-allowed; }
+  .cta.secondary{ background: transparent; border: 1.5px solid var(--line); color: var(--ink); }
+  .results{ display: none; }
+  .results.show{ display: block; }
+  .result-row{ display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-bottom: 1px solid var(--line); }
+  .result-row:last-child{ border-bottom: none; }
+  .result-row .swatch{ width: 12px; height: 12px; }
+  .result-row .rname{ flex: 1; font-size: 15px; }
+  .result-row .rrank{ font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif; font-size: 15px; color: var(--gold); }
+  .back-link{ display: inline-block; color: var(--muted); font-size: 13.5px; text-decoration: none; margin-bottom: 10px; }
+  .back-link:active{ color: var(--gold); }
+  .footer-note{ text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 22px; line-height: 1.6; }
+
+  /* --- 해적 룰렛 전용 --- */
+  .barrel-panel{ padding: 24px 16px 20px; }
+  .barrel-stage{
+    position: relative;
+    height: 128px;
+    display: flex; align-items: flex-end; justify-content: center;
+    margin-bottom: 18px;
+  }
+  .barrel-body{
+    font-size: 66px;
+    line-height: 1;
+    position: relative;
+    z-index: 2;
+    transform-origin: center bottom;
+  }
+  .barrel-body.shake{ animation: shake .55s ease; }
+  @keyframes shake{
+    0%,100%{ transform: translateX(0) rotate(0); }
+    20%{ transform: translateX(-6px) rotate(-4deg); }
+    40%{ transform: translateX(5px) rotate(3deg); }
+    60%{ transform: translateX(-4px) rotate(-2deg); }
+    80%{ transform: translateX(3px) rotate(2deg); }
+  }
+  .pirate{
+    position: absolute;
+    left: 50%;
+    bottom: 46px;
+    font-size: 34px;
+    transform: translate(-50%, 18px) scale(0.7) rotate(0deg);
+    opacity: 0;
+    z-index: 1;
+    transition: none;
+  }
+  .pirate.pop{
+    animation: pirateup 1.1s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pirateup{
+    0%{ opacity: 0; transform: translate(-50%, 18px) scale(0.7) rotate(0deg); }
+    40%{ opacity: 1; transform: translate(-50%, -58px) scale(1.15) rotate(-8deg); }
+    55%{ transform: translate(-50%, -50px) scale(1.05) rotate(6deg); }
+    75%{ transform: translate(-50%, -54px) scale(1.08) rotate(-4deg); }
+    100%{ opacity: 0; transform: translate(-50%, 10px) scale(0.8) rotate(0deg); }
+  }
+  .impact{
+    position: absolute;
+    left: 50%; bottom: 86px;
+    transform: translate(-50%, 0) scale(0.5);
+    font-size: 24px;
+    opacity: 0;
+    z-index: 3;
+  }
+  .impact.show{
+    animation: impactpop .6s ease-out;
+  }
+  @keyframes impactpop{
+    0%{ opacity: 0; transform: translate(-50%,0) scale(0.4); }
+    30%{ opacity: 1; transform: translate(-50%,-6px) scale(1.3); }
+    100%{ opacity: 0; transform: translate(-50%,-14px) scale(1.5); }
+  }
+
+  .turn-banner{
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel-2);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 13.5px;
+  }
+  .turn-banner.active{ border-color: var(--gold); }
+  .turn-banner .tdot{ width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .turn-banner b{ color: var(--gold); font-weight: 700; }
+
+  .hole-grid{
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .hole{
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1.5px dashed var(--line);
+    background: var(--panel-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    color: var(--muted);
+    cursor: pointer;
+    position: relative;
+  }
+  .hole.usable{ border-color: var(--gold); color: var(--gold); }
+  .hole.used{ cursor: default; border-style: solid; }
+  .hole .sword{ font-size: 14px; }
+  .hole .num{ position: absolute; bottom: -14px; font-size: 8.5px; color: var(--muted); }
+
+  @media (max-width: 380px){ .wrap{ padding: 28px 14px 48px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a href="../index.html" class="back-link">← 게임 목록</a>
+  <div class="hero">
+    <h1>해적 룰렛</h1>
+    <p>20개 구멍 중 하나씩 골라 칼을 꽂아요. 해적이 언제 튀어오를지는 아무도 몰라요</p>
+  </div>
+
+  <div class="panel" id="setupPanel">
+    <p class="panel-title">참가자 수</p>
+    <div class="stepper">
+      <button id="minusBtn" aria-label="줄이기">−</button>
+      <div class="count" id="countDisplay">4</div>
+      <button id="plusBtn" aria-label="늘리기">+</button>
+      <span class="count-label">명 (2~10명)</span>
+    </div>
+
+    <p class="panel-title" style="margin-bottom:8px;">참가자 이름</p>
+    <div id="nameInputs"></div>
+
+    <div class="toggle-row">
+      <div>
+        <span>결과 라벨 직접 정하기</span>
+        <small>예: 1등 대신 "커피 사기", 꼴등 대신 "설거지"</small>
+      </div>
+      <div class="switch" id="labelToggle" role="button" aria-label="결과 라벨 직접 정하기"></div>
+    </div>
+    <div class="label-inputs" id="labelInputs"></div>
+  </div>
+
+  <div class="panel barrel-panel">
+    <div class="barrel-stage">
+      <div class="impact" id="impact">💥</div>
+      <div class="pirate" id="pirate">🏴‍☠️</div>
+      <div class="barrel-body" id="barrelBody">🛢️</div>
+    </div>
+
+    <div class="turn-banner" id="turnBanner">
+      <span class="tdot" id="turnDot" style="background: var(--muted);"></span>
+      <span id="turnText">시작 버튼을 누르면 통이 준비돼요</span>
+    </div>
+
+    <div class="hole-grid" id="holeGrid"></div>
+
+    <button class="cta" id="playBtn">해적 룰렛 시작</button>
+    <button class="cta secondary" id="resetBtn" style="display:none; margin-top:10px;">다시 하기</button>
+  </div>
+
+  <div class="panel results" id="resultsPanel">
+    <p class="panel-title">결과</p>
+    <div id="resultsList"></div>
+  </div>
+
+  <p class="footer-note">해적이 튀어나오는 타이밍은 매번 새로 정해져요.<br>어떤 구멍을 고를지는 각자 선택하지만, 결과는 아무도 미리 알 수 없어요.</p>
+</div>
+
+<script>
+(function(){
+  var PALETTE = ['#F2545B','#F2994A','#F2C94C','#6FCF97','#56CCF2','#2F80ED','#BB6BD9','#EB5FA9','#27AE9E','#BDBDBD'];
+  var HOLE_COUNT = 20;
+
+  var state = { count: 4, names: [], customLabels: false, labels: [], started: false, played: false };
+  var trapTurnIndex = -1; // which turn (0-based) triggers the pirate, regardless of hole chosen
+  var turnIndex = 0;
+  var pressOrderRecord = []; // participant indices in the order they actually played
+
+  var nameInputsEl = document.getElementById('nameInputs');
+  var countDisplay = document.getElementById('countDisplay');
+  var minusBtn = document.getElementById('minusBtn');
+  var plusBtn = document.getElementById('plusBtn');
+  var labelToggle = document.getElementById('labelToggle');
+  var labelInputsEl = document.getElementById('labelInputs');
+  var holeGrid = document.getElementById('holeGrid');
+  var barrelBody = document.getElementById('barrelBody');
+  var pirateEl = document.getElementById('pirate');
+  var impactEl = document.getElementById('impact');
+  var turnBanner = document.getElementById('turnBanner');
+  var turnDot = document.getElementById('turnDot');
+  var turnText = document.getElementById('turnText');
+  var playBtn = document.getElementById('playBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var resultsPanel = document.getElementById('resultsPanel');
+  var resultsList = document.getElementById('resultsList');
+  var setupPanel = document.getElementById('setupPanel');
+
+  function defaultLabel(i, n){ return (i === n - 1) ? '꼴등' : (i + 1) + '등'; }
+
+  function renderNameInputs(){
+    nameInputsEl.innerHTML = '';
+    for (var i = 0; i < state.count; i++){
+      var row = document.createElement('div');
+      row.className = 'name-row';
+      var sw = document.createElement('div');
+      sw.className = 'swatch';
+      sw.style.background = PALETTE[i % PALETTE.length];
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.maxLength = 8;
+      input.placeholder = '참가자 ' + (i + 1);
+      input.value = state.names[i] || '';
+      input.dataset.idx = i;
+      input.addEventListener('input', function(e){ state.names[e.target.dataset.idx] = e.target.value; });
+      row.appendChild(sw);
+      row.appendChild(input);
+      nameInputsEl.appendChild(row);
+    }
+  }
+
+  function renderLabelInputs(){
+    labelInputsEl.innerHTML = '';
+    for (var i = 0; i < state.count; i++){
+      var row = document.createElement('div');
+      row.className = 'label-row';
+      var badge = document.createElement('div');
+      badge.className = 'rank-badge';
+      badge.textContent = (i + 1) + '.';
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.maxLength = 10;
+      input.placeholder = defaultLabel(i, state.count);
+      input.value = state.labels[i] || '';
+      input.dataset.idx = i;
+      input.addEventListener('input', function(e){ state.labels[e.target.dataset.idx] = e.target.value; });
+      row.appendChild(badge);
+      row.appendChild(input);
+      labelInputsEl.appendChild(row);
+    }
+  }
+
+  function getName(i){ return (state.names[i] && state.names[i].trim()) || ('참가자 ' + (i + 1)); }
+  function getLabel(i){ return (state.labels[i] && state.labels[i].trim()) || defaultLabel(i, state.count); }
+  function escapeHtml(str){ var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+  minusBtn.addEventListener('click', function(){
+    if (state.count <= 2 || state.started) return;
+    state.count--; countDisplay.textContent = state.count;
+    renderNameInputs(); renderLabelInputs();
+  });
+  plusBtn.addEventListener('click', function(){
+    if (state.count >= 10 || state.started) return;
+    state.count++; countDisplay.textContent = state.count;
+    renderNameInputs(); renderLabelInputs();
+  });
+  labelToggle.addEventListener('click', function(){
+    if (state.started) return;
+    state.customLabels = !state.customLabels;
+    labelToggle.classList.toggle('on', state.customLabels);
+    labelInputsEl.classList.toggle('show', state.customLabels);
+  });
+
+  var holeEls = [];
+  function buildHoles(){
+    holeGrid.innerHTML = '';
+    holeEls = [];
+    for (var h = 0; h < HOLE_COUNT; h++){
+      var hole = document.createElement('div');
+      hole.className = 'hole';
+      hole.innerHTML = '<span class="num">' + (h + 1) + '</span>';
+      holeGrid.appendChild(hole);
+      holeEls.push(hole);
+      (function(hole){
+        hole.addEventListener('click', function(){ handleHoleTap(hole); });
+      })(hole);
+    }
+  }
+
+  function updateTurnBanner(){
+    if (turnIndex >= state.count){
+      turnBanner.classList.remove('active');
+      turnDot.style.background = 'var(--gold)';
+      turnText.textContent = '모두 칼을 꽂았어요';
+      holeEls.forEach(function(h){ h.classList.remove('usable'); });
+      return;
+    }
+    turnBanner.classList.add('active');
+    turnDot.style.background = PALETTE[turnIndex % PALETTE.length];
+    turnText.innerHTML = '<b>' + escapeHtml(getName(turnIndex)) + '</b> 님 차례 — 구멍을 하나 골라주세요';
+    holeEls.forEach(function(h){
+      if (!h.classList.contains('used')) h.classList.add('usable');
+    });
+  }
+
+  function handleHoleTap(hole){
+    if (!state.started || hole.classList.contains('used') || turnIndex >= state.count) return;
+
+    var participantIdx = turnIndex;
+    var color = PALETTE[participantIdx % PALETTE.length];
+    hole.classList.remove('usable');
+    hole.classList.add('used');
+    hole.style.borderColor = color;
+    hole.style.background = color + '22';
+    hole.innerHTML = '<span class="sword">🗡️</span><span class="num">' + (Array.prototype.indexOf.call(holeEls, hole) + 1) + '</span>';
+
+    pressOrderRecord.push(participantIdx);
+
+    var isTrap = (turnIndex === trapTurnIndex);
+
+    if (isTrap){
+      barrelBody.classList.add('shake');
+      pirateEl.classList.add('pop');
+      impactEl.classList.add('show');
+      turnBanner.classList.remove('active');
+      turnText.innerHTML = '<b>' + escapeHtml(getName(participantIdx)) + '</b> 님이 해적을 깨웠어요!';
+      setTimeout(function(){
+        barrelBody.classList.remove('shake');
+        pirateEl.classList.remove('pop');
+        impactEl.classList.remove('show');
+      }, 1150);
+    }
+
+    turnIndex++;
+
+    setTimeout(function(){
+      updateTurnBanner();
+      if (turnIndex === state.count){
+        setTimeout(function(){
+          showResults();
+          state.played = true;
+          playBtn.style.display = 'none';
+          resetBtn.style.display = 'block';
+        }, isTrap ? 900 : 200);
+      }
+    }, isTrap ? 700 : 150);
+  }
+
+  playBtn.addEventListener('click', function(){
+    if (state.started) return;
+    state.started = true;
+    playBtn.disabled = true;
+    setupPanel.style.opacity = '0.5';
+    setupPanel.style.pointerEvents = 'none';
+
+    trapTurnIndex = Math.floor(Math.random() * state.count);
+    turnIndex = 0;
+    pressOrderRecord = [];
+    buildHoles();
+    updateTurnBanner();
+  });
+
+  function showResults(){
+    var n = state.count;
+    var safeList = pressOrderRecord.filter(function(idx, arrIdx){ return arrIdx !== trapTurnIndex; });
+    var trapParticipant = pressOrderRecord[trapTurnIndex];
+
+    var rankOf = {};
+    for (var s = 0; s < safeList.length; s++) rankOf[safeList[s]] = s;
+    rankOf[trapParticipant] = n - 1;
+
+    var rows = [];
+    for (var i = 0; i < n; i++){
+      rows.push({ name: getName(i), color: PALETTE[i % PALETTE.length], label: getLabel(rankOf[i]) });
+    }
+    resultsList.innerHTML = '';
+    rows.forEach(function(r){
+      var row = document.createElement('div');
+      row.className = 'result-row';
+      var sw = document.createElement('div');
+      sw.className = 'swatch';
+      sw.style.background = r.color;
+      var name = document.createElement('div');
+      name.className = 'rname';
+      name.textContent = r.name;
+      var rank = document.createElement('div');
+      rank.className = 'rrank';
+      rank.textContent = r.label;
+      row.appendChild(sw); row.appendChild(name); row.appendChild(rank);
+      resultsList.appendChild(row);
+    });
+    resultsPanel.classList.add('show');
+    resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  resetBtn.addEventListener('click', function(){
+    state.started = false;
+    state.played = false;
+    turnIndex = 0;
+    pressOrderRecord = [];
+    setupPanel.style.opacity = '1';
+    setupPanel.style.pointerEvents = 'auto';
+    resultsPanel.classList.remove('show');
+    playBtn.style.display = 'block';
+    playBtn.disabled = false;
+    resetBtn.style.display = 'none';
+    turnBanner.classList.remove('active');
+    turnDot.style.background = 'var(--muted)';
+    turnText.textContent = '시작 버튼을 누르면 통이 준비돼요';
+    holeGrid.innerHTML = '';
+  });
+
+  // init
+  renderNameInputs();
+  renderLabelInputs();
+})();
+</script>
+</body>
+</html>
